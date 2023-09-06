@@ -1,6 +1,6 @@
 # Install Slack via MSI (Replace with the actual MSI file path)
 $slackMSIPath = "https://slack.com/ssb/download-win64-msi"
-Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $slackMSIPath /qn /norestart" -Wait
+#Start-Process -FilePath "msiexec.exe" -ArgumentList "/i $slackMSIPath /qn /norestart" -Wait
 
 
 
@@ -15,7 +15,7 @@ $clickUpInstallerURL = "https://desktop.clickup.com/windows?_gl=1*1aoi82m*_gcl_a
 $installerFilePath = "C:\ClickUpInstaller.exe"
 
 # Download the ClickUp installer
-Invoke-WebRequest -Uri $clickUpInstallerURL -OutFile $installerFilePath
+#Invoke-WebRequest -Uri $clickUpInstallerURL -OutFile $installerFilePath
 
 # Check if the download was successful
 if (Test-Path $installerFilePath) {
@@ -24,8 +24,8 @@ if (Test-Path $installerFilePath) {
     Write-Host "Failed to download the ClickUp installer."
 }
 
-Start-Process -FilePath $installerFilePath -ArgumentList "/SILENT" -Wait
-Remove-Item -Path $installerFilePath
+#Start-Process -FilePath $installerFilePath -ArgumentList "/SILENT" -Wait
+#Remove-Item -Path $installerFilePath
 
 
 
@@ -54,18 +54,71 @@ $imageURL = "https://firebasestorage.googleapis.com/v0/b/tricks-vue.appspot.com/
 $imageFilePath = "C:\TricksFolsomBackground.png"
 
 # Download the Image
-Invoke-WebRequest -Uri $imageURL -OutFile $imageFilePath
+#Invoke-WebRequest -Uri $imageURL -OutFile $imageFilePath
 
 # Check if the image file exists
 if (Test-Path $imageFilePath -PathType Leaf) {
-    # Set Wallpaper
-    [SystemParametersInfo]::SystemParametersInfo(20, 0, $imageFilePath, 3)
+
+
+
+
+
+
 
     # Set the lock screen image using the registry
-    Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" -Name "LockScreenImage" -Value $imageFilePath
+    #Set-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\PersonalizationCSP" -Name "LockScreenImageUrl" -Value $image
 
+
+
+    #$regKey = 'HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization'
+    # create the key if it doesn't already exist
+    #if (!(Test-Path -Path $regKey)) {
+       #$null = New-Item -Path $regKey
+    #}
+
+    # now set the registry entry
+    #Set-ItemProperty -Path $regKey -Name "LockScreenImage" -value $imageFilePath
+
+
+
+
+
+    
+    # Set Lock Screen Image
+    $lockScreenRegKey = "HKLM:\SOFTWARE\Policies\Microsoft\Windows\Personalization"
+    if (!(Test-Path -Path $lockScreenRegKey)) {
+       $null = New-Item -Path $lockScreenRegKey
+    }
+    Set-ItemProperty -Path $lockScreenRegKey -Name LockScreenImage -Value $imageFilePath
+
+
+
+
+    
+    # Set Desktop Background Image
+    $wallpaperRegKey = "HKCU:\Control Panel\Desktop"
+    if (!(Test-Path -Path $wallpaperRegKey)) {
+       $null = New-Item -Path $wallpaperRegKey
+    }
+    Set-ItemProperty -Path $wallpaperRegKey -Name Wallpaper -Value $imageFilePath
+
+
+
+
+    # Refresh Desktop Background
+    RUNDLL32.EXE USER32.DLL,UpdatePerUserSystemParameters ,1 ,True
+    
     # Trigger a background sync for the lock screen image
     Rundll32.exe C:\Windows\System32\themecpl.dll,OpenPersonalizationPage
+
+
+
+
+
+
+
+
+
 
     Write-Host "Lock screen image has been set successfully."
 } else {
